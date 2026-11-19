@@ -1,0 +1,5 @@
+#!/bin/sh
+# every module loaded the checker, none failed, and none went missing
+[ "$(grep -c 'round trip holds' "$1")" = "$(grep -c '^=== ' "$1")" ] \
+    && [ "$(grep -c '^=== ' "$1")" -ge 30 ] \
+    && ! grep -q "FAIL" "$1"
