@@ -89,8 +89,10 @@ const int GENSER_NPARAMS = P_COUNT;
 #error GENSER_MAX_JOINTS must be at least 6; fix genserkins.h
 #endif
 
-/* below this a joint increment or a rotation counts as zero */
+/* the inverse has converged once every joint steps less than this */
 #define GENSER_SMALL 1.0e-7
+/* a step below this is rounding: not taken, so a machine at rest stays put */
+#define GENSER_ROUNDING 1.0e-12
 /* below this a pivot leaves a matrix singular */
 #define GENSER_SINGULAR_EPSILON 1.0e-15
 
@@ -323,17 +325,13 @@ static void quat_rvec_convert(const PmQuaternion *q, PmCartesian *r)
 {
     double sh = sqrt(q->x * q->x + q->y * q->y + q->z * q->z);
 
-    if (sh < GENSER_SMALL) {
-        r->x = 0.0;
-        r->y = 0.0;
-        r->z = 0.0;
-    } else {
-        double mag = 2.0 * atan2(sh, q->s) / sh;
+    /* as sh goes to 0 this goes to 2 / s, which is 2, since s >= 0 as
+       pmQuatQuatMult leaves it: a small rotation is still seen */
+    double mag = sh > 0.0 ? 2.0 * atan2(sh, q->s) / sh : 2.0;
 
-        r->x = mag * q->x;
-        r->y = mag * q->y;
-        r->z = mag * q->z;
-    }
+    r->x = mag * q->x;
+    r->y = mag * q->y;
+    r->z = mag * q->z;
 }
 
 static void dh_pose_convert(const genser_dh *dh, PmPose *p)
@@ -821,10 +819,13 @@ static int genser_inverse(const kins_params *p, kins_scratch *s,
                 smalls++;
         }
         if (smalls == genser->link_num) {
-            /* converged, copy jest[] out */
+            /* converged: take the last step, but not one of rounding
+               size, so a machine at rest gets its joints back unchanged */
             for (link = 0; link < genser->link_num; link++) {
+                double j = jest[link];
+                if (fabs(dj[link]) > GENSER_ROUNDING) j += dj[link];
                 // convert from radians back to angles
-                joints[link] = jest[link] * 180 / PM_PI;
+                joints[link] = j * 180 / PM_PI;
                 rtapi_s32 unrotate = unrotate_of(p, link);
                 if ((link) && unrotate)
                     joints[link] += unrotate * joints[link-1];
