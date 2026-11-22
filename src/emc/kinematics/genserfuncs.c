@@ -719,10 +719,13 @@ static int genser_inverse(const kins_params *p, kins_scratch *s,
     matrix_init(&Jfwd, 6, genser->link_num);
     matrix_init(&Jinv, genser->link_num, 6);
 
-    /* jest[] is a copy of joints[], which is the joint estimate */
+    /* joint estimate: joints[] less unrotate coupling, as in the forward */
     for (link = 0; link < genser->link_num; link++) {
         // jest, and the rest of joint related calcs are in radians
+        rtapi_s32 unrotate = unrotate_of(p, link);
         jest[link] = joints[link] * (PM_PI / 180);
+        if (link && unrotate)
+            jest[link] -= unrotate * jest[link-1];
     }
 
     for (genser->iterations = 0;
