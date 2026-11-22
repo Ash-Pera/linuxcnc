@@ -369,13 +369,68 @@ static int StrutLengthCorrection(const genhex_geometry *g,
   pmCartCartCross(&na1, StrutVectUnit, &na2);
   pmCartUnitEq(&na2);
 
-  /* define dot product */
+  /* define dot product, clamped: rounding can carry it past +-1, and
+     the default geometry runs within 1e-4 of 1 */
   pmCartCartDot(&nb3, &na2, &dotprod);
+  if (dotprod > 1.0) dotprod = 1.0;
+  if (dotprod < -1.0) dotprod = -1.0;
 
   *correction = g->screw_lead * asin(dotprod) / PM_2_PI;
 
   return 0;
 } // StrutLengthCorrection()
+
+/* the screw correction of strut i at a pose */
+static int correction_at(const genhex_geometry *g, const PmCartesian *trans,
+                         const PmRotationMatrix *R, int i, double *corr)
+{
+  PmCartesian Ra, aw, v, u;
+
+  pmMatCartMult(R, &g->a[i], &Ra);
+  pmCartCartAdd(trans, &Ra, &aw);
+  pmCartCartSub(&aw, &g->b[i], &v);
+  if (0 != pmCartUnit(&v, &u)) { return -1; }
+  return StrutLengthCorrection(g, &u, R, i, corr);
+}
+
+/* add the correction rates in x y z r p y to each strut's row, by one-sided
+   differences from corr[], the corrections at the pose */
+static int add_correction_rates(const genhex_geometry *g,
+                                const PmCartesian *trans, const PmRpy *rpy,
+                                const PmRotationMatrix *R,
+                                const double corr[NUM_STRUTS],
+                                double rows[NUM_STRUTS][NUM_STRUTS])
+{
+  const double h = 1e-6;
+  int i, k;
+
+  for (k = 0; k < NUM_STRUTS; k++) {
+    PmCartesian t = *trans;
+    PmRpy r = *rpy;
+    PmRotationMatrix Rk = *R;
+
+    switch (k) {
+    case 0: t.x += h; break;
+    case 1: t.y += h; break;
+    case 2: t.z += h; break;
+    case 3: r.r += h; break;
+    case 4: r.p += h; break;
+    default: r.y += h; break;
+    }
+    if (k >= 3) {
+      pmRpyMatConvert(&r, &Rk);
+    }
+    for (i = 0; i < NUM_STRUTS; i++) {
+      double c;
+
+      if (correction_at(g, &t, &Rk, i, &c)) {
+        return -1;
+      }
+      rows[i][k] += (c - corr[i]) / h;
+    }
+  }
+  return 0;
+}
 
 
 /**************** genhex_forward() *****************/
@@ -397,7 +452,7 @@ static int genhex_forward(const kins_params *p, kins_scratch *s,
   double InvKinStrutLength, StrutLengthDiff[NUM_STRUTS];
   double delta[NUM_STRUTS];
   double conv_err = 1.0;
-  double corr;
+  double corr[NUM_STRUTS];
 
   PmRotationMatrix RMatrix;
   PmRpy q_RPY;
@@ -486,9 +541,9 @@ static int genhex_forward(const kins_params *p, kins_scratch *s,
 
       if (g.screw_lead != 0.0) {
         /* enable strut length correction */
-        StrutLengthCorrection(&g, &InvKinStrutVectUnit, &RMatrix, i, &corr);
+        StrutLengthCorrection(&g, &InvKinStrutVectUnit, &RMatrix, i, &corr[i]);
         /* define corrected joint lengths */
-        InvKinStrutLength += corr;
+        InvKinStrutLength += corr[i];
       }
 
       StrutLengthDiff[i] = InvKinStrutLength - joints[i];
@@ -503,6 +558,15 @@ static int genhex_forward(const kins_params *p, kins_scratch *s,
       pmCartCartDot(&RMatrix_a_cross_Strut, &E[0], &InverseJacobian[i][3]);
       pmCartCartDot(&RMatrix_a_cross_Strut, &E[1], &InverseJacobian[i][4]);
       pmCartCartDot(&RMatrix_a_cross_Strut, &E[2], &InverseJacobian[i][5]);
+    }
+
+    /* the correction moves with the pose too */
+    if (g.screw_lead != 0.0
+        && add_correction_rates(&g, &q_trans, &q_RPY, &RMatrix, corr,
+                                InverseJacobian)) {
+      s->failed = 1;
+      s->out[P_FWD_FAIL] = 1;
+      return -1;
     }
 
     /* invert Inverse Jacobian */
