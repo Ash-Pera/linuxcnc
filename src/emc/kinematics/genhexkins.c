@@ -465,15 +465,15 @@ static int genhex_forward(const kins_params *p, kins_scratch *s,
 
   geometry_of(p, &g);
 
-  /* abort on obvious problems, like joints <= 0 */
+  /* abort on obvious problems, like joints <= 0 or NaN */
   /* FIXME-- should check against triangle inequality, so that joints
      are never too short to span shared base and platform sides */
-  if (joints[0] <= 0.0 ||
-      joints[1] <= 0.0 ||
-      joints[2] <= 0.0 ||
-      joints[3] <= 0.0 ||
-      joints[4] <= 0.0 ||
-      joints[5] <= 0.0) {
+  if (!(joints[0] > 0.0) ||
+      !(joints[1] > 0.0) ||
+      !(joints[2] > 0.0) ||
+      !(joints[3] > 0.0) ||
+      !(joints[4] > 0.0) ||
+      !(joints[5] > 0.0)) {
       return -1;
   }
 

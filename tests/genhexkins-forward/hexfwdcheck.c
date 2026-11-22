@@ -12,7 +12,8 @@
  * it converged linearly: a dozen iterations and more where Newton takes
  * three or four, and at large tilts not at all.  Over a grid of tilted
  * poses, seed the forward a little off each, as one cycle of motion
- * leaves it, and require the pose back within the limit.
+ * leaves it, and require the pose back within the limit.  And require the
+ * forward to fail, not converge, on a strut of NaN length.
  *
  * Author: LinuxCNC
  * License: GPL Version 2
@@ -90,6 +91,27 @@ static void check(const EmcPose *pose)
     }
 }
 
+/* a strut of NaN length has no pose, and the forward has to say so */
+static void check_nan(void)
+{
+    KINEMATICS_FORWARD_FLAGS ff = 0;
+    KINEMATICS_INVERSE_FLAGS inf = 0;
+    EmcPose pose = {{0, 0, 20}, 0, 0, 0, 0, 0, 0};
+    double joints[EMCMOT_MAX_JOINTS];
+
+    poses++;
+    if (kinematicsInverse(&pose, joints, &inf, &ff)) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "hexfwdcheck: FAIL inverse at 0 0 20 0 0 0\n");
+        failures++;
+        return;
+    }
+    joints[0] = nan("");
+    if (!kinematicsForward(joints, &pose, &ff, &inf)) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "hexfwdcheck: FAIL forward converged on a NaN strut\n");
+        failures++;
+    }
+}
+
 /* the hexapod-sim geometry, the module's defaults: home Z 20, struts near
    30; tilts to 30 degrees and the platform turned 45 */
 static const double tilt[] = { -30, -15, 0, 15, 30 };
@@ -114,6 +136,8 @@ int rtapi_app_main(void)
 {
     comp_id = hal_init("hexfwdcheck");
     if (comp_id < 0) { return comp_id; }
+
+    check_nan();
 
     for (size_t ia = 0; ia < NELEM(tilt); ia++) {
         for (size_t ib = 0; ib < NELEM(tilt); ib++) {
