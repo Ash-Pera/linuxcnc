@@ -1,0 +1,13 @@
+# The inverse comes back within 5e-9 degrees, from a seed 1e-3 off and
+# from one 1e-6 off, closer than its convergence threshold; with
+# unrotate set, within a limit of 6 iterations.
+loadrt genserkins
+check joints=9 tolexp=7 lo=-400,-100,-100,-400,10,-400 hi=400,100,100,400,170,400
+
+loadrt genserkins
+check joints=9 stepexp=6 tolexp=7 lo=-400,-100,-100,-400,10,-400 hi=400,100,100,400,170,400
+
+loadrt genserkins
+setp genserkins.unrotate-3 1
+setp genserkins.max-iterations 6
+check joints=9 tolexp=7 lo=-400,-100,-100,-400,10,-400 hi=400,100,100,400,170,400
