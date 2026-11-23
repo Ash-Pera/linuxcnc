@@ -1,0 +1,11 @@
+# The base and the wrist roll go past a whole turn.  The wrist pitch
+# keeps 10 degrees off 0 and 180, where the wrist is straight or folded
+# and joints 4 and 6 are not determined, and takes each sign in its own
+# case, since the forward sets the wrist flip from it.
+loadrt pumakins
+setp pumakins.D6 50
+check joints=6 lo=-400,-100,-100,-400,10,-400 hi=400,100,100,400,170,400
+
+loadrt pumakins
+setp pumakins.D6 50
+check joints=6 rseed=2 lo=-400,-100,-100,-400,-170,-400 hi=400,100,100,400,-10,400

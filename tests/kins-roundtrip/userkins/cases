@@ -1,0 +1,3 @@
+# the module's defaults
+loadrt userkins
+check joints=3 lo=-100,-100,-100 hi=100,100,100

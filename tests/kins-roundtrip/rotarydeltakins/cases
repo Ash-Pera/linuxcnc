@@ -1,0 +1,3 @@
+# a parallel machine, from the pose side
+loadrt rotarydeltakins
+check joints=9 frompose=1 lo=-5,-5,-15 hi=5,5,-8

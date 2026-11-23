@@ -1,0 +1,10 @@
+# identity, and the gantry from the pose side, where two joints
+# drive one coordinate
+loadrt trivkins coordinates=XYZ
+check joints=3 lo=-100,-100,-100 hi=100,100,100
+
+loadrt trivkins coordinates=XYZY kinstype=BOTH
+check joints=4 frompose=1 lo=-100,-100,-100 hi=100,100,100
+
+loadrt trivkins coordinates=XYZABCUVW
+check joints=9 lo=-100,-100,-100,-400,-400,-400,-10,-10,-10 hi=100,100,100,400,400,400,10,10,10

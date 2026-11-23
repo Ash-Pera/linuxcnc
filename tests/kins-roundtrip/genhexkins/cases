@@ -1,0 +1,10 @@
+# a parallel machine, from the pose side; with no screw lead, and with
+# one, where near y = 2 in this box the forward can land on another pose
+# with the same strut lengths, so the box is held below it
+loadrt genhexkins
+setp genhexkins.screw-lead 0
+check joints=6 frompose=1 lo=-5,-5,10,-10,-10,-15 hi=5,5,30,10,10,15
+
+loadrt genhexkins
+setp genhexkins.screw-lead 5
+check joints=6 frompose=1 lo=-5,-5,10,-10,-10,-15 hi=5,1,30,10,10,15

@@ -1,0 +1,3 @@
+# the sim arm's own limits on joint 0, and the elbow both ways
+loadrt scarakins
+check joints=6 lo=-360,-170,-100,-400,0,0 hi=360,170,100,400,0,0

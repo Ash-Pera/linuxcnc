@@ -1,0 +1,11 @@
+# the module's defaults; the tilt to 120, the turn past a whole one;
+# the second case with identity kinematics as type 0, the third with a
+# tool offset
+loadrt 5axiskins coordinates=XYZBCW
+check joints=6 lo=-100,-100,-100,-120,-400,-10 hi=100,100,100,120,400,10
+
+loadrt 5axiskins coordinates=XYZBCW sparm=identityfirst
+check joints=6 lo=-100,-100,-100,-120,-400,-10 hi=100,100,100,120,400,10
+
+loadrt 5axiskins coordinates=XYZBCW
+check joints=6 tool=4,3,12 lo=-100,-100,-100,-120,-400,-10 hi=100,100,100,120,400,10

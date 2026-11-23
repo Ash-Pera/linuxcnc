@@ -1,0 +1,5 @@
+# offsets set so no term drops out; the tilt to 120, the turn past a
+# whole one.  maxkins has no A.
+loadrt maxkins
+setp maxkins.pivot-length 100
+check joints=9 lo=-100,-100,-100,0,-120,-400,-10,-10,-10 hi=100,100,100,0,120,400,10,10,10

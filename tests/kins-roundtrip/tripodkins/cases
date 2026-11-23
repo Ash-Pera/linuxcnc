@@ -1,0 +1,6 @@
+# a parallel machine, from the pose side
+loadrt tripodkins
+setp tripodkins.Bx 2
+setp tripodkins.Cx 1
+setp tripodkins.Cy 2
+check joints=3 frompose=1 denom=10 lo=5,5,10 hi=15,15,30

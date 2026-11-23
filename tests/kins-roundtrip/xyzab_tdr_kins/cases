@@ -1,0 +1,9 @@
+# offsets set so no term drops out; both tilts to 120
+loadrt xyzab_tdr_kins
+setp xyzab_tdr_kins.x-offset 3
+setp xyzab_tdr_kins.z-offset 11
+setp xyzab_tdr_kins.tool-offset-z 7
+setp xyzab_tdr_kins.x-rot-point 1
+setp xyzab_tdr_kins.y-rot-point 2
+setp xyzab_tdr_kins.z-rot-point 5
+check joints=5 lo=-100,-100,-100,-120,-120 hi=100,100,100,120,120
