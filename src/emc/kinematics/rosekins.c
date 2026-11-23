@@ -30,7 +30,7 @@ MODULE_LICENSE("GPL");
 #define hypot(a,b) (sqrt((a)*(a)+(b)*(b)))
 #endif
 
-// the inverse reports the turn count it keeps and the angles it saw
+// the inverse reports joint 2's whole turns and its angles
 static const kins_param_desc rose_params[] = {
     { "revolutions",      KINS_PARAM_REAL, KINS_OUT, 0, {.r=0.0} },
     { "theta_degrees",    KINS_PARAM_REAL, KINS_OUT, 0, {.r=0.0} },
@@ -38,11 +38,11 @@ static const kins_param_desc rose_params[] = {
 };
 enum { O_REVOLUTIONS, O_THETA, O_BIGTHETA };
 
-// what the inverse carries from one call to the next: the quadrant it
-// last saw and the turns it has counted.  In the scratch, so that each
-// caller counts its own.
-#define OLDQUAD(s)     ((s)->aux[0])
-#define REVOLUTIONS(s) ((s)->aux[1])
+/* angle, in degrees, moved by whole turns to within a half turn of near */
+static double nearestTurn(double angle, double near)
+{
+    return angle - 360.0*round((angle - near)/360.0);
+}
 
 static int rose_forward(const kins_params *p, kins_scratch *s,
                         const double *joints,
@@ -82,36 +82,20 @@ static int rose_inverse(const kins_params *p, kins_scratch *s,
     (void)p;
     (void)iflags;
     (void)fflags;
-// There is a potential problem when accumulating bigtheta -- loss of
-// precision based on size of mantissa -- but in practice, it is probably ok
-
-    int        oldquad = (int)OLDQUAD(s);
-    int        revolutions = (int)REVOLUTIONS(s);
-
-    double     theta,bigtheta;
-    int        nowquad = 0;
     double     x = pos->tran.x;
     double     y = pos->tran.y;
     double     z = pos->tran.z;
+    double     theta = TO_DEG * atan2(y,x);
+    // joint 2 is the angle within a half turn of the joint handed in
+    double     bigtheta = nearestTurn(theta, joints[2]);
 
-    if      (x >= 0 && y >= 0) nowquad = 1;
-    else if (x <  0 && y >= 0) nowquad = 2;
-    else if (x <  0 && y <  0) nowquad = 3;
-    else if (x >= 0 && y <  0) nowquad = 4;
-
-    if (oldquad == 2 && nowquad == 3) {revolutions += 1;}
-    if (oldquad == 3 && nowquad == 2) {revolutions -= 1;}
-
-    theta     = atan2(y,x);
-    bigtheta  = theta + PM_2_PI * revolutions;
-
-    s->out[O_REVOLUTIONS] = revolutions;
-    s->out[O_THETA]       = theta * TO_DEG;
-    s->out[O_BIGTHETA]    = bigtheta * TO_DEG;
+    s->out[O_REVOLUTIONS] = round((bigtheta - theta)/360.0);
+    s->out[O_THETA]       = theta;
+    s->out[O_BIGTHETA]    = bigtheta;
 
     joints[0] = hypot(x,y);
     joints[1] = z;
-    joints[2] = TO_DEG * bigtheta;
+    joints[2] = bigtheta;
     joints[3] = 0;
     joints[4] = 0;
     joints[5] = 0;
@@ -119,8 +103,6 @@ static int rose_inverse(const kins_params *p, kins_scratch *s,
     joints[7] = 0;
     joints[8] = 0;
 
-    OLDQUAD(s)     = nowquad;
-    REVOLUTIONS(s) = revolutions;
     return 0;
 }
 

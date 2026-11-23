@@ -1,0 +1,5 @@
+# joint 0, the radius, keeps off 0, where the angle is not determined,
+# and positive, the sign the inverse gives it; joint 2 goes past a whole
+# turn each way
+loadrt rosekins
+check joints=3 lo=10,-100,-400 hi=100,100,400

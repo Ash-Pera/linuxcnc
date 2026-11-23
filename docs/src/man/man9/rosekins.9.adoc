@@ -18,19 +18,19 @@ spindle (workholding, not tool holding, e.g. not a highspeed spindle)
 == PINS
 
 *rosekins.revolutions* real out::
-  Count of crossings of the negative X axis.
-  Clockwise crossings increment revolutions by 1, counterclockwise crossings decrement by 1.
+  Whole turns of joint_2 from the principal value.
 *rosekins.theta_degrees* real out::
   Principal value for arctan(Y/X)
 *rosekins.bigtheta_degrees* real out::
-  Accumulated angle (theta + revolutions * 360)
+  Joint_2's angle, theta + revolutions * 360
 
 == NOTES
 
 Theta is the principal value of arctan(Y/X). Joint_2 angle values are
-not limited to principal values of arctan(Y/X) but accumulate
-continuously as the spindle is rotated. HAL pins are provided for the
-principal value and a count of the number of revolutions.
+not limited to principal values of arctan(Y/X): the inverse returns the
+angle within a half turn of the joint_2 it is handed, so it follows the
+spindle as it turns. HAL pins are provided for the principal value and
+the number of whole turns.
 
 The transverse motion is exactly perpendicular to the spindle. In a
 traditional rose engine, the transverse motion is created by 'rocking'

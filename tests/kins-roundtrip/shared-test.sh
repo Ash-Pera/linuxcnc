@@ -7,11 +7,6 @@
 # Rotaries go past a whole turn wherever the module claims to follow
 # the joint it is handed.  One directory per module, so runtests -j runs
 # them side by side.
-#
-# rosekins has no directory: its inverse counts the turns of joint 2
-# from the quadrants it saw on earlier calls, not from the joint it is
-# handed, so it holds only along a path walked in small steps, not at
-# points drawn at random.
 set -e
 
 [ -r cases ] || { echo "Error: file 'cases' does not exist"; exit 1; }
